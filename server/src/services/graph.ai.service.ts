@@ -8,7 +8,7 @@ import {
   END,
   type GraphNode
 } from "@langchain/langgraph";
-import {MistralModel,CohereModel, GeminiModel} from '../services/models.service.js'
+import {MistralModel,CohereModel, GeminiModel} from './models.service.js'
 import {z} from 'zod';
 import { createAgent,providerStrategy } from "langchain";
 
@@ -39,11 +39,16 @@ const State = new StateSchema({
     }
   })
 })
-const solutionNode: GraphNode<typeof State> = async (state: typeof State) => {
+const solutionNode: GraphNode<typeof State> = async (state) => {
+  const prompt = state.messages[0]?.text;
+  if (!prompt) {
+    throw new Error("A user message is required to generate solutions.");
+  }
+
   console.log(state.messages);
   const [mistral_solution,cohere_solution]=await Promise.all([
-    MistralModel.invoke(state.messages[0].text),
-    CohereModel.invoke(state.messages[0].text)
+    MistralModel.invoke(prompt),
+    CohereModel.invoke(prompt)
   ]
    
   )
@@ -52,8 +57,13 @@ const solutionNode: GraphNode<typeof State> = async (state: typeof State) => {
     solution_2:cohere_solution.text,
   };
 };
-const judgeNode:GraphNode<typeof State> = async (state:typeof State)=>{
-  const {solution_1,solution_2}=State;
+const judgeNode:GraphNode<typeof State> = async (state)=>{
+  const {solution_1,solution_2}=state;
+  const prompt = state.messages[0]?.text;
+  if (!prompt) {
+    throw new Error("A user message is required to judge solutions.");
+  }
+
   const judge=createAgent({
     model:GeminiModel,
     tools:[],
@@ -64,7 +74,7 @@ const judgeNode:GraphNode<typeof State> = async (state:typeof State)=>{
   })
   const judgeResponse=await judge.invoke({
     messages:[
-    new HumanMessage(`You are a judge tasked with evaluating two solutions to a problem.The problem is: ${state.messages[0].text}.
+    new HumanMessage(`You are a judge tasked with evaluating two solutions to a problem.The problem is: ${prompt}.
        Please provide a score between 0 and 10 for each solution, where 0 is the worst and 10 is the best. Here are the solutions:\n\nSolution 1: ${solution_1}\n\nSolution 2: ${solution_2}`)
     ]
   })

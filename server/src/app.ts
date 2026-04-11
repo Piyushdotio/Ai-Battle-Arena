@@ -9,7 +9,7 @@ app.get('/health',(req,res)=>{
         status:'ok'
     })
 })
-app.post('/use-graph',async(req,res)=>{
+app.get('/use-graph',async(req,res)=>{
     const prompt = typeof req.body?.message === 'string' && req.body.message.trim()
       ? req.body.message
       : "What is the capital of France?"
