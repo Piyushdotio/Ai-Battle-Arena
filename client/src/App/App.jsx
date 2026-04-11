@@ -18,6 +18,24 @@ const mockData = {
 
 const App = () => {
   const [currentPrompt, setCurrentPrompt] = useState(mockData.prompt);
+  const [historyItems, setHistoryItems] = useState([
+    { id: 1, title: "GPT-4o vs Claude 3.5", active: true },
+    { id: 2, title: "Llama 3 vs Gemini Pro", active: false },
+    { id: 3, title: "Capital of France Test", active: false },
+  ]);
+
+  const handleExecute = (val) => {
+    setCurrentPrompt(val);
+    setHistoryItems((prev) => {
+      const mapped = prev.map((p) => ({ ...p, active: false }));
+      return [{ id: Date.now(), title: val, active: true }, ...mapped];
+    });
+  };
+
+  const handleNewChat = () => {
+    setCurrentPrompt("");
+    setHistoryItems((prev) => prev.map((p) => ({ ...p, active: false })));
+  };
 
   return (
     /* Outer dot-grid fullscreen */
@@ -45,9 +63,13 @@ const App = () => {
         }}
       >
         {/* Icon Sidebar */}
-        <Sidebar />
+        <Sidebar 
+          historyItems={historyItems} 
+          setHistoryItems={setHistoryItems} 
+          onNewChat={handleNewChat} 
+        />
 
-        {/* Main content */}
+        {/* Main Content Area */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
           {/* ── Top header strip ── */}
@@ -62,8 +84,12 @@ const App = () => {
               }}>
                 AI BATTLE ARENA
               </span>
-              <span className="protocol-status" style={{ borderLeft: "1px solid var(--color-border)", paddingLeft: 12 }}>
-               
+              <span className="protocol-status" style={{ borderLeft: "1px solid var(--color-border)", paddingLeft: 12, display: "flex", alignItems: "center" }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: "bold", display: "flex", gap: "6px" }}>
+                  <span style={{ color: "var(--color-model-a)", textShadow: "0 0 8px rgba(203, 151, 255, 0.6)" }}>GPT-4O</span>
+                  <span style={{ color: "var(--color-muted)" }}>VS</span>
+                  <span style={{ color: "var(--color-model-b)", textShadow: "0 0 8px rgba(0, 255, 153, 0.6)" }}>CLAUDE 3.5</span>
+                </div>
               </span>
             </div>
 
@@ -85,35 +111,37 @@ const App = () => {
           <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
 
             {/* ── User Prompt Display ── */}
-            <div className="fade-up" style={{ 
-              display: "flex", 
-              justifyContent: "flex-end", 
-              padding: "24px 24px 10px", 
-              position: "relative", 
-              zIndex: 10 
-            }}>
-              <div style={{
-                background: "rgba(255, 255, 255, 0.06)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                padding: "10px 16px",
-                borderRadius: "16px 16px 4px 16px",
-                maxWidth: "70%",
-                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-                backdropFilter: "blur(10px)"
+            {currentPrompt && (
+              <div className="fade-up" style={{ 
+                display: "flex", 
+                justifyContent: "flex-end", 
+                padding: "24px 24px 10px", 
+                position: "relative", 
+                zIndex: 10 
               }}>
-                <p style={{ 
-                  fontFamily: "var(--font-body)", 
-                  fontSize: "0.95rem", 
-                  color: "#e2e2e8", 
-                  lineHeight: 1.5,
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word"
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.06)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  padding: "10px 16px",
+                  borderRadius: "16px 16px 4px 16px",
+                  maxWidth: "70%",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                  backdropFilter: "blur(10px)"
                 }}>
-                  {currentPrompt}
-                </p>
+                  <p style={{ 
+                    fontFamily: "var(--font-body)", 
+                    fontSize: "0.95rem", 
+                    color: "#e2e2e8", 
+                    lineHeight: 1.5,
+                    margin: 0,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word"
+                  }}>
+                    {currentPrompt}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* ── Hero VS Removed per user request ── */}
 
@@ -134,13 +162,13 @@ const App = () => {
             {/* ── Verdict card ── */}
             <VerdictCard
               scores={mockData.judge_recommendation}
-              winner="B"
             />
 
+            <div style={{ height: "32px", flexShrink: 0 }} />
           </div>
 
           {/* ── Bottom command bar ── */}
-          <InputBar onExecute={setCurrentPrompt} />
+          <InputBar onExecute={handleExecute} />
         </div>
       </div>
     </div>
