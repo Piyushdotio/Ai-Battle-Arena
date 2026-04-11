@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Bell, Mail } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import InputBar from "../components/InputBar";
@@ -17,6 +17,8 @@ const mockData = {
 };
 
 const App = () => {
+  const [currentPrompt, setCurrentPrompt] = useState(mockData.prompt);
+
   return (
     /* Outer dot-grid fullscreen */
     <div
@@ -50,9 +52,20 @@ const App = () => {
 
           {/* ── Top header strip ── */}
           <div className="arena-header">
-            <span className="protocol-status">
-              PROTOCOL STATUS: <span>OPTIMAL</span>
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ 
+                fontFamily: "var(--font-display)", 
+                fontSize: "1.1rem", 
+                fontWeight: 700, 
+                letterSpacing: "0.05em",
+                color: "#fff"
+              }}>
+                AI BATTLE ARENA
+              </span>
+              <span className="protocol-status" style={{ borderLeft: "1px solid var(--color-border)", paddingLeft: 12 }}>
+               
+              </span>
+            </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
               <button className="sync-btn">SYNC LICENSE</button>
@@ -71,15 +84,38 @@ const App = () => {
           {/* ── Scrollable body ── */}
           <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
 
-            {/* ── Hero VS ── */}
-            <div className="hero-vs">
-              <div className="vs-row">
-                <span className="model-name-a">GPT-4O</span>
-                <span className="vs-label">vs</span>
-                <span className="model-name-b">CLAUDE 3.5</span>
+            {/* ── User Prompt Display ── */}
+            <div className="fade-up" style={{ 
+              display: "flex", 
+              justifyContent: "flex-end", 
+              padding: "24px 24px 10px", 
+              position: "relative", 
+              zIndex: 10 
+            }}>
+              <div style={{
+                background: "rgba(255, 255, 255, 0.06)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                padding: "10px 16px",
+                borderRadius: "16px 16px 4px 16px",
+                maxWidth: "70%",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                backdropFilter: "blur(10px)"
+              }}>
+                <p style={{ 
+                  fontFamily: "var(--font-body)", 
+                  fontSize: "0.95rem", 
+                  color: "#e2e2e8", 
+                  lineHeight: 1.5,
+                  margin: 0,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word"
+                }}>
+                  {currentPrompt}
+                </p>
               </div>
-              <div className="tactical-sub">— TACTICAL SIMULATION ACTIVE —</div>
             </div>
+
+            {/* ── Hero VS Removed per user request ── */}
 
             {/* ── Battle grid ── */}
             <div className="battle-grid">
@@ -104,7 +140,7 @@ const App = () => {
           </div>
 
           {/* ── Bottom command bar ── */}
-          <InputBar />
+          <InputBar onExecute={setCurrentPrompt} />
         </div>
       </div>
     </div>

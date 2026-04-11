@@ -33,7 +33,12 @@ const SolutionCard = ({ model, content, type = "A", stats }) => {
 
       {/* Solution text inset box */}
       <div className="solution-box" style={{ flex: 1 }}>
-        <p className="solution-text">"{content}"</p>
+        <p 
+          className="solution-text" 
+          dangerouslySetInnerHTML={{ 
+            __html: content.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #fff; font-weight: 700;">$1</strong>') 
+          }} 
+        />
       </div>
 
       {/* Footer: stats + actions */}

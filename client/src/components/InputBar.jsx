@@ -4,7 +4,7 @@ import { Terminal } from "lucide-react";
 /**
  * InputBar — Bottom command bar matching the Stitch design
  */
-const InputBar = () => {
+const InputBar = ({ onExecute }) => {
   const [inputValue, setInputValue] = useState("");
   const [executing, setExecuting] = useState(false);
 
@@ -14,6 +14,7 @@ const InputBar = () => {
     
     // Fake execution delay for visual feedback
     setTimeout(() => {
+      if (onExecute) onExecute(inputValue);
       setInputValue("");
       setExecuting(false);
     }, 1200);
