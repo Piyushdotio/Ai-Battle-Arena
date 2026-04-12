@@ -1,5 +1,6 @@
 import express from 'express'
 import { invokeGraph } from './services/graph.ai.service.js'
+import { success } from 'zod'
 
 const app=express()
 app.use(express.json())
@@ -7,6 +8,15 @@ app.use(express.json())
 app.get('/health',(req,res)=>{
     res.status(200).json({
         status:'ok'
+    })
+})
+app.post('/invoke',async(req,res)=>{
+    const {input} = req.body
+    const result:any= await invokeGraph(input)
+    res.status(200).json({
+       message:"graph invoked successfully",
+       success:true,
+       data:result
     })
 })
 app.get('/use-graph',async(req,res)=>{

@@ -19,35 +19,78 @@ const mockData = {
 const AVAILABLE_MODELS = ["GPT-4o", "Claude 3.5", "Llama 3 70B", "Gemini 1.5 Pro", "Mistral Large"];
 
 const App = () => {
-  const [currentPrompt, setCurrentPrompt] = useState(mockData.prompt);
-  const [currentScores, setCurrentScores] = useState(mockData.judge_recommendation);
+  const [sessions, setSessions] = useState([
+    {
+      id: Date.now(),
+      title: "First Battle",
+      interactions: [
+        {
+          id: Date.now() + 1,
+          prompt: mockData.prompt,
+          solution_1: mockData.solution_1,
+          solution_2: mockData.solution_2,
+          scores: mockData.judge_recommendation,
+        }
+      ]
+    }
+  ]);
+  const [activeSessionId, setActiveSessionId] = useState(sessions[0].id);
+
   const [selectedModelA, setSelectedModelA] = useState("GPT-4o");
   const [selectedModelB, setSelectedModelB] = useState("Claude 3.5");
-  const [historyItems, setHistoryItems] = useState([
-    { id: 1, title: "GPT-4o vs Claude 3.5", active: true },
-    { id: 2, title: "Llama 3 vs Gemini Pro", active: false },
-    { id: 3, title: "Capital of France Test", active: false },
-  ]);
 
   const handleExecute = (val) => {
-    setCurrentPrompt(val);
-    
-    // Simulate new judge scores for the battle
-    const s1 = Math.floor(Math.random() * 4) + 7; // 7-10
-    const s2 = Math.floor(Math.random() * 4) + 7; // 7-10
-    setCurrentScores({ solution_1_score: s1, solution_2_score: s2 });
+    const s1 = Math.floor(Math.random() * 4) + 7;
+    const s2 = Math.floor(Math.random() * 4) + 7;
 
-    setHistoryItems((prev) => {
-      const mapped = prev.map((p) => ({ ...p, active: false }));
-      return [{ id: Date.now(), title: val, active: true }, ...mapped];
+    const newInteraction = {
+      id: Date.now() + 1,
+      prompt: val,
+      solution_1: `Simulated response from Model A to: "${val}"\n\n` + mockData.solution_1,
+      solution_2: `Simulated response from Model B to: "${val}"\n\n` + mockData.solution_2,
+      scores: { solution_1_score: s1, solution_2_score: s2 },
+    };
+
+    setSessions((prev) => {
+      const activeSession = prev.find(s => s.id === activeSessionId);
+      if (activeSession) {
+        // Append to existing session
+        return prev.map(s => s.id === activeSessionId ? { ...s, interactions: [...s.interactions, newInteraction] } : s);
+      } else {
+        // Create new session
+        const newSessionId = Date.now();
+        setActiveSessionId(newSessionId);
+        return [{ id: newSessionId, title: val, interactions: [newInteraction] }, ...prev];
+      }
     });
   };
 
   const handleNewChat = () => {
-    setCurrentPrompt("");
-    setCurrentScores({ solution_1_score: 0, solution_2_score: 0 });
-    setHistoryItems((prev) => prev.map((p) => ({ ...p, active: false })));
+    setActiveSessionId(null);
   };
+
+  const handleSelectSession = (id) => {
+    setActiveSessionId(id);
+  };
+
+  const handleDeleteSession = (id) => {
+    setSessions((prev) => {
+      const remaining = prev.filter(s => s.id !== id);
+      if (activeSessionId === id) {
+        setActiveSessionId(null);
+      }
+      return remaining;
+    });
+  };
+
+  const historyItems = sessions.map(s => ({
+    id: s.id,
+    title: s.title,
+    active: s.id === activeSessionId
+  }));
+
+  const activeSession = sessions.find(s => s.id === activeSessionId);
+  const interactions = activeSession ? activeSession.interactions : [];
 
   return (
     /* Outer dot-grid fullscreen */
@@ -77,7 +120,8 @@ const App = () => {
         {/* Icon Sidebar */}
         <Sidebar 
           historyItems={historyItems} 
-          setHistoryItems={setHistoryItems} 
+          onSelectSession={handleSelectSession}
+          onDeleteSession={handleDeleteSession}
           onNewChat={handleNewChat} 
         />
 
@@ -122,65 +166,73 @@ const App = () => {
           {/* ── Scrollable body ── */}
           <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
 
-            {/* ── User Prompt Display ── */}
-            {currentPrompt && (
-              <div className="fade-up" style={{ 
-                display: "flex", 
-                justifyContent: "flex-end", 
-                padding: "24px 24px 10px", 
-                position: "relative", 
-                zIndex: 10 
-              }}>
-                <div style={{
-                  background: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  padding: "10px 16px",
-                  borderRadius: "16px 16px 4px 16px",
-                  maxWidth: "70%",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
-                  backdropFilter: "blur(10px)"
-                }}>
-                  <p style={{ 
-                    fontFamily: "var(--font-body)", 
-                    fontSize: "0.95rem", 
-                    color: "#e2e2e8", 
-                    lineHeight: 1.5,
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    wordBreak: "break-word"
+            {interactions.map((interaction, index) => (
+              <div key={interaction.id} style={{ display: "flex", flexDirection: "column", marginBottom: index < interactions.length - 1 ? "40px" : "0" }}>
+                {/* ── User Prompt Display ── */}
+                {interaction.prompt && (
+                  <div className="fade-up" style={{ 
+                    display: "flex", 
+                    justifyContent: "flex-end", 
+                    padding: "24px 24px 10px", 
+                    position: "relative", 
+                    zIndex: 10 
                   }}>
-                    {currentPrompt}
-                  </p>
+                    <div style={{
+                      background: "rgba(255, 255, 255, 0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      padding: "10px 16px",
+                      borderRadius: "16px 16px 4px 16px",
+                      maxWidth: "70%",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                      backdropFilter: "blur(10px)"
+                    }}>
+                      <p style={{ 
+                        fontFamily: "var(--font-body)", 
+                        fontSize: "0.95rem", 
+                        color: "#e2e2e8", 
+                        lineHeight: 1.5,
+                        margin: 0,
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word"
+                      }}>
+                        {interaction.prompt}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Hero VS Removed per user request ── */}
+
+                {/* ── Battle grid ── */}
+                <div className="battle-grid">
+                  <SolutionCard
+                    model={selectedModelA}
+                    availableModels={AVAILABLE_MODELS}
+                    onModelChange={setSelectedModelA}
+                    content={interaction.solution_1}
+                    type="A"
+                    isWinner={interaction.scores.solution_1_score > interaction.scores.solution_2_score}
+                  />
+                  <SolutionCard
+                    model={selectedModelB}
+                    availableModels={AVAILABLE_MODELS}
+                    onModelChange={setSelectedModelB}
+                    content={interaction.solution_2}
+                    type="B"
+                    isWinner={interaction.scores.solution_2_score > interaction.scores.solution_1_score}
+                  />
                 </div>
+
+                {/* ── Verdict card ── */}
+                <VerdictCard
+                  scores={interaction.scores}
+                />
+                
+                {index < interactions.length - 1 && (
+                   <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", margin: "20px 24px 0 24px" }} />
+                )}
               </div>
-            )}
-
-            {/* ── Hero VS Removed per user request ── */}
-
-            {/* ── Battle grid ── */}
-            <div className="battle-grid">
-              <SolutionCard
-                model={selectedModelA}
-                availableModels={AVAILABLE_MODELS}
-                onModelChange={setSelectedModelA}
-                content={mockData.solution_1}
-                type="A"
-                isWinner={currentScores.solution_1_score > currentScores.solution_2_score}
-              />
-              <SolutionCard
-                model={selectedModelB}
-                availableModels={AVAILABLE_MODELS}
-                onModelChange={setSelectedModelB}
-                content={mockData.solution_2}
-                type="B"
-                isWinner={currentScores.solution_2_score > currentScores.solution_1_score}
-              />
-            </div>
-
-            {/* ── Verdict card ── */}
-            <VerdictCard
-              scores={currentScores}
-            />
+            ))}
 
             <div style={{ height: "32px", flexShrink: 0 }} />
           </div>

@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Swords, Settings, PanelLeftClose, PanelLeftOpen, MessageSquare, Trash2, Plus, ChevronDown, ChevronRight } from "lucide-react";
 
-const Sidebar = ({ historyItems, setHistoryItems, onNewChat }) => {
+const Sidebar = ({ historyItems, onSelectSession, onDeleteSession, onNewChat }) => {
   const [expanded, setExpanded] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(true);
 
   const handleDelete = (e, id) => {
     e.stopPropagation();
-    setHistoryItems((prev) => prev.filter((item) => item.id !== id));
+    onDeleteSession(id);
   };
 
   return (
@@ -80,7 +80,7 @@ const Sidebar = ({ historyItems, setHistoryItems, onNewChat }) => {
       {historyOpen && (
         <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4, width: "100%", overflowX: "hidden" }} className="custom-scrollbar">
         {historyItems?.map((item) => (
-          <div key={item.id} className={`icon-btn ${item.active ? "active" : ""}`} title={item.title}>
+          <div key={item.id} className={`icon-btn ${item.active ? "active" : ""}`} title={item.title} onClick={() => onSelectSession(item.id)} style={{ cursor: "pointer" }}>
             <MessageSquare size={16} strokeWidth={item.active ? 2 : 1.8} style={{ color: item.active ? "var(--color-model-b)" : "inherit", flexShrink: 0 }} />
             {expanded && (
               <span style={{ 
