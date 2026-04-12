@@ -16,8 +16,13 @@ const mockData = {
   },
 };
 
+const AVAILABLE_MODELS = ["GPT-4o", "Claude 3.5", "Llama 3 70B", "Gemini 1.5 Pro", "Mistral Large"];
+
 const App = () => {
   const [currentPrompt, setCurrentPrompt] = useState(mockData.prompt);
+  const [currentScores, setCurrentScores] = useState(mockData.judge_recommendation);
+  const [selectedModelA, setSelectedModelA] = useState("GPT-4o");
+  const [selectedModelB, setSelectedModelB] = useState("Claude 3.5");
   const [historyItems, setHistoryItems] = useState([
     { id: 1, title: "GPT-4o vs Claude 3.5", active: true },
     { id: 2, title: "Llama 3 vs Gemini Pro", active: false },
@@ -26,6 +31,12 @@ const App = () => {
 
   const handleExecute = (val) => {
     setCurrentPrompt(val);
+    
+    // Simulate new judge scores for the battle
+    const s1 = Math.floor(Math.random() * 4) + 7; // 7-10
+    const s2 = Math.floor(Math.random() * 4) + 7; // 7-10
+    setCurrentScores({ solution_1_score: s1, solution_2_score: s2 });
+
     setHistoryItems((prev) => {
       const mapped = prev.map((p) => ({ ...p, active: false }));
       return [{ id: Date.now(), title: val, active: true }, ...mapped];
@@ -34,6 +45,7 @@ const App = () => {
 
   const handleNewChat = () => {
     setCurrentPrompt("");
+    setCurrentScores({ solution_1_score: 0, solution_2_score: 0 });
     setHistoryItems((prev) => prev.map((p) => ({ ...p, active: false })));
   };
 
@@ -86,9 +98,9 @@ const App = () => {
               </span>
               <span className="protocol-status" style={{ borderLeft: "1px solid var(--color-border)", paddingLeft: 12, display: "flex", alignItems: "center" }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: "bold", display: "flex", gap: "6px" }}>
-                  <span style={{ color: "var(--color-model-a)", textShadow: "0 0 8px rgba(203, 151, 255, 0.6)" }}>GPT-4O</span>
+                  <span style={{ color: "var(--color-model-a)", textShadow: "0 0 8px rgba(203, 151, 255, 0.4)" }}>{selectedModelA.toUpperCase()}</span>
                   <span style={{ color: "var(--color-muted)" }}>VS</span>
-                  <span style={{ color: "var(--color-model-b)", textShadow: "0 0 8px rgba(0, 255, 153, 0.6)" }}>CLAUDE 3.5</span>
+                  <span style={{ color: "var(--color-model-b)", textShadow: "0 0 8px rgba(0, 255, 153, 0.4)" }}>{selectedModelB.toUpperCase()}</span>
                 </div>
               </span>
             </div>
@@ -148,20 +160,26 @@ const App = () => {
             {/* ── Battle grid ── */}
             <div className="battle-grid">
               <SolutionCard
-                model="GPT-4o"
+                model={selectedModelA}
+                availableModels={AVAILABLE_MODELS}
+                onModelChange={setSelectedModelA}
                 content={mockData.solution_1}
                 type="A"
+                isWinner={currentScores.solution_1_score > currentScores.solution_2_score}
               />
               <SolutionCard
-                model="Claude 3.5"
+                model={selectedModelB}
+                availableModels={AVAILABLE_MODELS}
+                onModelChange={setSelectedModelB}
                 content={mockData.solution_2}
                 type="B"
+                isWinner={currentScores.solution_2_score > currentScores.solution_1_score}
               />
             </div>
 
             {/* ── Verdict card ── */}
             <VerdictCard
-              scores={mockData.judge_recommendation}
+              scores={currentScores}
             />
 
             <div style={{ height: "32px", flexShrink: 0 }} />
