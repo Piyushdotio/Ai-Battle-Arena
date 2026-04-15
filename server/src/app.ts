@@ -19,12 +19,17 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       
-      // Remove trailing slash from FRONTEND_URL if present for exact matching
-      const formattedAllowedOrigin = allowedOrigin.replace(/\/$/, "");
+      const configuredOrigin = allowedOrigin.replace(/\/$/, "");
       
-      if (origin === formattedAllowedOrigin || origin === "http://localhost:5173") {
+      // Allow if it matches the configured origin, is a vercel URL, or is localhost
+      if (
+        origin === configuredOrigin || 
+        origin.endsWith(".vercel.app") || 
+        origin.startsWith("http://localhost:")
+      ) {
         callback(null, true);
       } else {
+        console.warn(`CORS blocked request from origin: ${origin}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
