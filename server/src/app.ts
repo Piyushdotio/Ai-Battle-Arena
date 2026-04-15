@@ -15,24 +15,7 @@ const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      const configuredOrigin = allowedOrigin.replace(/\/$/, "");
-      
-      // Allow if it matches the configured origin, is a vercel URL, or is localhost
-      if (
-        origin === configuredOrigin || 
-        origin.endsWith(".vercel.app") || 
-        origin.startsWith("http://localhost:")
-      ) {
-        callback(null, true);
-      } else {
-        console.warn(`CORS blocked request from origin: ${origin}`);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: true, // This automatically sets Access-Control-Allow-Origin to the requesting origin
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
