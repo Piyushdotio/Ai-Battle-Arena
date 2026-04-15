@@ -9,7 +9,7 @@ app.use((req, res, next) => {
   console.log(`📨 ${req.method} ${req.path}`);
   next();
 });
-
+app.use(express.static("./public"));
 // 🌐 Ultimate CORS & OPTIONS Handling
 app.use((req, res, next) => {
   const origin = req.headers.origin;
