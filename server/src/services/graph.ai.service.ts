@@ -27,8 +27,8 @@ const defaultScores = {
 };
 
 function createAsyncEventQueue() {
-  const events = [];
-  const waiters = [];
+  const events: any[] = [];
+  const waiters: any[] = [];
   let closed = false;
 
   return {
@@ -116,7 +116,7 @@ async function streamSingleModel(key, prompt, onEvent) {
     const fallback =
       "Model response is currently unavailable. Please try again later.";
 
-    onEvent({ type: "model_error", key, message: err.message });
+    onEvent({ type: "model_error", key, message: err instanceof Error ? err.message : String(err) });
     onEvent({ type: "model_end", key, text: fallback });
 
     return fallback;
@@ -213,7 +213,7 @@ export async function* invokeGraphStream(input) {
   ]).finally(() => queue.close());
 
   for await (const event of queue.iterate()) {
-    console.log("🔥 EVENT:", event.type);
+    console.log("🔥 EVENT:", event?.type);
     yield event;
   }
 
@@ -247,8 +247,8 @@ export const invokeGraph = async (input) => {
   let final = null;
 
   for await (const event of invokeGraphStream(input)) {
-    if (event.type === "done") {
-      final = event.data;
+    if (event?.type === "done") {
+      final = (event as any).data;
     }
   }
 
