@@ -76,53 +76,35 @@ app.post("/invoke", async (req, res) => {
   }
 });
 
-// ==============================
-// 🔥 STREAMING API (SSE FIXED)
-// ==============================
+// ✅ SSE HEADERS (CRITICAL ORDER FOR VERCEL)
 app.post("/invoke/stream", async (req, res) => {
   const { input } = req.body;
 
   if (!input || typeof input !== "string" || !input.trim()) {
-    return res.status(400).json({
-      success: false,
-      message: "A valid input string is required.",
-    });
+    return res.status(400).json({ success: false, message: "A valid input string is required." });
   }
 
-  console.log("🚀 STREAM START");
+  // 🔥 VERCEL SSE FIX: Set headers BEFORE anything else
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no", // 🔥 Stops Vercel/Nginx from buffering the stream
+    "Access-Control-Allow-Origin": req.headers.origin || "*",
+    "Access-Control-Allow-Credentials": "true",
+  });
 
-  // ✅ SSE HEADERS (CRITICAL)
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no"); // 🔥 prevents buffering
-
-  res.flushHeaders?.();
-
-  // ✅ Send helper
   const sendEvent = (payload: unknown) => {
-    const data = `data: ${JSON.stringify(payload)}\n\n`;
-    res.write(data);
-
-    // 🔍 Debug
-    if (typeof payload === "object" && payload !== null && "type" in payload) {
-      console.log("📡 EVENT:", (payload as any).type);
-    }
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
   };
 
   try {
     for await (const event of invokeGraphStream(input)) {
       sendEvent(event);
     }
-
-    console.log("✅ STREAM COMPLETE");
   } catch (error) {
     console.error("❌ STREAM ERROR:", error);
-
-    sendEvent({
-      type: "error",
-      message: error instanceof Error ? error.message : "Streaming failed.",
-    });
+    sendEvent({ type: "error", message: error instanceof Error ? error.message : "Streaming failed." });
   } finally {
     res.end();
   }
