@@ -1,7 +1,7 @@
 import { HumanMessage } from "@langchain/core/messages";
 import { createAgent, providerStrategy } from "langchain";
 import { z } from "zod";
-import { CohereModel, OPENAIModel, MistralModel } from "./models.service.js";
+import { CohereModel, geminiModel, MistralModel } from "./models.service.js";
 import NodeCache from "node-cache";
 
 const responseCache = new NodeCache({ stdTTL: 300, checkperiod: 60 }); // 5 min TTL
@@ -193,7 +193,7 @@ async function judgeSolutions(
   const startTime = Date.now();
   try {
     const judge = createAgent({
-      model: OPENAIModel,
+      model: geminiModel,
       tools: [],
       responseFormat: providerStrategy(judgeSchema),
     });

@@ -1,11 +1,11 @@
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatGoogle } from "@langchain/google";
 import { ChatMistralAI } from "@langchain/mistralai";
 import { ChatCohere } from "@langchain/cohere";
 import configs from "../config/config.js";
 
 // Validate API keys on startup
-if (!configs.OPENAI_API_KEY) {
-  console.warn("⚠️ OPENAI_API_KEY is missing in .env file");
+if (!configs.GEMINI_API_KEY) {
+  console.warn("⚠️ GEMINI_API_KEY is missing in .env file");
 }
 if (!configs.MISTRAL_API_KEY) {
   console.warn("⚠️ MISTRAL_API_KEY is missing in .env file");
@@ -14,9 +14,9 @@ if (!configs.COHERE_API_KEY) {
   console.warn("⚠️ COHERE_API_KEY is missing in .env file");
 }
 
-export const OPENAIModel = new ChatOpenAI({
-  modelName: "gpt-4o-mini",
-  openAIApiKey: configs.OPENAI_API_KEY,
+export const geminiModel = new ChatGoogle({
+  model: "gemini-flash-latest",
+  openAIApiKey: configs.GEMINI_API_KEY,
 });
 export const MistralModel = new ChatMistralAI({
   model: "mistral-medium-latest",
@@ -29,6 +29,6 @@ export const CohereModel = new ChatCohere({
 });
 
 console.log("✓ Models initialized:");
-console.log("  - OpenAI GPT");
+console.log("  - GEMINI AI");
 console.log("  - Mistral AI");
 console.log("  - Cohere");
