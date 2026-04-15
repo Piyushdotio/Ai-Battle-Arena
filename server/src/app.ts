@@ -10,16 +10,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🌐 CORS Configuration
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+// 🌐 Manual CORS & OPTIONS Handling (Best for Vercel)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // Allow all origins or your specific ones
+  res.setHeader("Access-Control-Allow-Origin", origin || "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 
-app.use(
-  cors({
-    origin: "*", // Allows exactly everything, preventing credential conflicts
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+  next();
+});
 
 app.use(express.json());
 
