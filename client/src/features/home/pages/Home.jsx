@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Bell,
   Mail,
@@ -20,7 +21,7 @@ const AVAILABLE_MODELS = [
   "Mistral Large",
 ];
 const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "https://ai-battle-arena-yfn4.vercel.app/"
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
 ).replace(/\/$/, "");
 
 const phaseLabels = {
@@ -32,18 +33,18 @@ const phaseLabels = {
 };
 
 const parseSseEventBlock = (block) => {
-  const dataLines = block
-    .split("\n")
-    .filter((line) => line.startsWith("data:"))
-    .map((line) => line.slice(5).trim());
-
-  if (dataLines.length === 0) {
-    return null;
-  }
-
   try {
+    const lines = block.split("\n");
+
+    const dataLines = lines
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.replace("data:", "").trim());
+
+    if (dataLines.length === 0) return null;
+
     return JSON.parse(dataLines.join("\n"));
-  } catch {
+  } catch (err) {
+    console.error("❌ SSE parse error:", err);
     return null;
   }
 };
@@ -58,20 +59,24 @@ const Home = () => {
   const [selectedModelB, setSelectedModelB] = useState("Claude 3.5");
 
   const updateInteraction = (sessionId, interactionId, updater) => {
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id !== sessionId
-          ? session
-          : {
-              ...session,
-              interactions: session.interactions.map((interaction) =>
-                interaction.id !== interactionId
-                  ? interaction
-                  : { ...interaction, ...updater(interaction) },
-              ),
-            },
-      ),
-    );
+    flushSync(() => {
+      setSessions((prev) =>
+        prev.map((session) => {
+          if (session.id !== sessionId) return session;
+
+          return {
+            ...session,
+            interactions: session.interactions.map((interaction) => {
+              if (interaction.id !== interactionId) return interaction;
+
+              const updatedInteraction = updater(interaction);
+              console.log("Updated Interaction:", updatedInteraction); // Debugging log
+              return { ...interaction, ...updatedInteraction };
+            }),
+          };
+        }),
+      );
+    });
   };
 
   const handleStreamEvent = (sessionId, interactionId, event) => {
@@ -94,7 +99,6 @@ const Home = () => {
           event.key === "solution_1"
             ? "Combatant Alpha is responding"
             : "Combatant Beta is responding",
-        [event.key === "solution_1" ? "streamingA" : "streamingB"]: true,
       }));
       return;
     }
@@ -109,7 +113,6 @@ const Home = () => {
     if (event.type === "model_end") {
       updateInteraction(sessionId, interactionId, () => ({
         [event.key]: event.text,
-        [event.key === "solution_1" ? "streamingA" : "streamingB"]: false,
       }));
       return;
     }
@@ -134,8 +137,6 @@ const Home = () => {
         isLoading: false,
         phase: "completed",
         phaseLabel: phaseLabels.completed,
-        streamingA: false,
-        streamingB: false,
       }));
       return;
     }
@@ -182,23 +183,48 @@ const Home = () => {
       throw new Error(message);
     }
 
+    const contentType = response.headers.get("content-type");
+
+    if (!contentType?.includes("text/event-stream")) {
+      throw new Error("Backend is not sending stream");
+    }
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+
     let buffer = "";
+
+    console.log("🟢 STREAM STARTED");
 
     while (true) {
       const { done, value } = await reader.read();
 
       if (done) {
+        console.log("🔚 STREAM DONE");
         break;
       }
 
-      buffer += decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true });
+
+      if (!chunk) continue;
+
+      console.log("📦 CHUNK:", chunk); // 🔥 DEBUG
+
+      buffer += chunk;
+
       const blocks = buffer.split("\n\n");
       buffer = blocks.pop() ?? "";
 
       for (const block of blocks) {
         const event = parseSseEventBlock(block);
+
+        if (!event) {
+          console.warn("⚠️ INVALID BLOCK:", block);
+          continue;
+        }
+
+        console.log("⚡ EVENT:", event.type);
+
         handleStreamEvent(sessionId, interactionId, event);
       }
     }
@@ -536,16 +562,11 @@ const Home = () => {
                     onModelChange={setSelectedModelA}
                     content={interaction.solution_1}
                     type="A"
-                    isLoading={interaction.isLoading}
-                    isStreaming={interaction.streamingA}
+                    isLoading={false} // Ensure skeleton is not shown
                     phaseLabel={
-                      interaction.streamingA
-                        ? "Streaming live tokens"
-                        : interaction.phase === "judge"
-                          ? "Waiting for judge verdict"
-                          : interaction.isLoading && !interaction.solution_1
-                            ? "Thinking"
-                            : "Response ready"
+                      interaction.phase === "judge"
+                        ? "Waiting for judge verdict"
+                        : interaction.phaseLabel
                     }
                     isWinner={
                       interaction.scores.solution_1_score >
@@ -558,16 +579,11 @@ const Home = () => {
                     onModelChange={setSelectedModelB}
                     content={interaction.solution_2}
                     type="B"
-                    isLoading={interaction.isLoading}
-                    isStreaming={interaction.streamingB}
+                    isLoading={false} // Ensure skeleton is not shown
                     phaseLabel={
-                      interaction.streamingB
-                        ? "Streaming live tokens"
-                        : interaction.phase === "judge"
-                          ? "Waiting for judge verdict"
-                          : interaction.isLoading && !interaction.solution_2
-                            ? "Thinking"
-                            : "Response ready"
+                      interaction.phase === "judge"
+                        ? "Waiting for judge verdict"
+                        : interaction.phaseLabel
                     }
                     isWinner={
                       interaction.scores.solution_2_score >
