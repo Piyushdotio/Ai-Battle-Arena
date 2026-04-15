@@ -10,10 +10,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🌐 CORS (local dev)
+// 🌐 CORS Configuration
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Remove trailing slash from FRONTEND_URL if present for exact matching
+      const formattedAllowedOrigin = allowedOrigin.replace(/\/$/, "");
+      
+      if (origin === formattedAllowedOrigin || origin === "http://localhost:5173") {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -21,6 +35,15 @@ app.use(
 );
 
 app.use(express.json());
+
+// 🏠 Root route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Welcome to LANGRAPH Server API",
+    version: "1.0.0"
+  });
+});
 
 // ✅ Health check
 app.get("/health", (req, res) => {
@@ -122,7 +145,7 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: `Route ${req.method} ${req.path} not found`,
-    availableRoutes: ["GET /health", "POST /invoke", "POST /invoke/stream"],
+    availableRoutes: ["GET /", "GET /health", "POST /invoke", "POST /invoke/stream"],
   });
 });
 
