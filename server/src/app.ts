@@ -10,19 +10,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// 🌐 Manual CORS & OPTIONS Handling (Best for Vercel)
+// 🌐 Ultimate CORS & OPTIONS Handling
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  
-  // Allow all origins or your specific ones
   res.setHeader("Access-Control-Allow-Origin", origin || "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, Content-Type");
   res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Expose-Headers", "Content-Type, X-Accel-Buffering"); // Fundamental for Streaming
 
-  // Handle preflight OPTIONS request
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
   next();
 });
