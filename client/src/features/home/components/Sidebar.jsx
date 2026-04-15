@@ -19,7 +19,7 @@ const Sidebar = ({ historyItems, onSelectSession, onDeleteSession, onNewChat }) 
         style={{ marginBottom: 4 }}
       >
         {expanded ? <PanelLeftClose size={18} strokeWidth={2} /> : <PanelLeftOpen size={18} strokeWidth={2} />}
-        {expanded && <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: "700" }}>TOGGLE NAVBAR</span>}
+        {expanded && <span className="sidebar-label sidebar-label-strong">TOGGLE NAVBAR</span>}
       </div>
 
       <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 0 6px" }} />
@@ -28,11 +28,7 @@ const Sidebar = ({ historyItems, onSelectSession, onDeleteSession, onNewChat }) 
       <div className={`icon-btn ${historyItems?.some(i => i.active) ? '' : 'active'}`}>
         <Swords size={18} strokeWidth={2} />
         {expanded && (
-          <span style={{ 
-            fontFamily: "var(--font-mono)", 
-            fontSize: "11px", 
-            fontWeight: "700" 
-          }}>
+          <span className="sidebar-label sidebar-label-strong">
             BATTLE ARENA
           </span>
         )}
@@ -47,12 +43,7 @@ const Sidebar = ({ historyItems, onSelectSession, onDeleteSession, onNewChat }) 
       >
         <Plus size={18} strokeWidth={2.5} />
         {expanded && (
-          <span style={{ 
-            fontFamily: "var(--font-mono)", 
-            fontSize: "11px", 
-            fontWeight: "700",
-            letterSpacing: "0.1em"
-          }}>
+          <span className="sidebar-label sidebar-label-strong">
             NEW BATTLE
           </span>
         )}
@@ -83,16 +74,7 @@ const Sidebar = ({ historyItems, onSelectSession, onDeleteSession, onNewChat }) 
           <div key={item.id} className={`icon-btn ${item.active ? "active" : ""}`} title={item.title} onClick={() => onSelectSession(item.id)} style={{ cursor: "pointer" }}>
             <MessageSquare size={16} strokeWidth={item.active ? 2 : 1.8} style={{ color: item.active ? "var(--color-model-b)" : "inherit", flexShrink: 0 }} />
             {expanded && (
-              <span style={{ 
-                fontFamily: "var(--font-mono)", 
-                fontSize: "10px", 
-                fontWeight: item.active ? "700" : "500",
-                color: item.active ? "var(--color-model-b)" : "var(--color-muted-light)",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: "130px"
-              }}>
+              <span className={`history-item-text ${item.active ? "active" : ""}`}>
                 {item.title}
               </span>
             )}
@@ -125,7 +107,7 @@ const Sidebar = ({ historyItems, onSelectSession, onDeleteSession, onNewChat }) 
       <div style={{ marginTop: "auto" }}>
         <div className="icon-btn">
           <Settings size={18} strokeWidth={1.8} />
-          {expanded && <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", fontWeight: "500" }}>SETTINGS</span>}
+          {expanded && <span className="sidebar-label">SETTINGS</span>}
         </div>
       </div>
     </div>

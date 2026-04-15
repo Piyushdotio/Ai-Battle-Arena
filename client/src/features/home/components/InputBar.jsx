@@ -4,20 +4,31 @@ import { Terminal } from "lucide-react";
 /**
  * InputBar — Bottom command bar matching the Stitch design
  */
-const InputBar = ({ onExecute }) => {
-  const [inputValue, setInputValue] = useState("");
+const InputBar = ({ onExecute, value, onChange }) => {
+  const [internalValue, setInternalValue] = useState("");
   const [executing, setExecuting] = useState(false);
+  const inputValue = value ?? internalValue;
+
+  const updateValue = (nextValue) => {
+    if (onChange) {
+      onChange(nextValue);
+      return;
+    }
+
+    setInternalValue(nextValue);
+  };
 
   const handleExecute = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || executing) return;
     setExecuting(true);
-    
-    // Fake execution delay for visual feedback
-    setTimeout(() => {
-      if (onExecute) onExecute(inputValue);
-      setInputValue("");
-      setExecuting(false);
-    }, 1200);
+
+    Promise.resolve(onExecute?.(inputValue))
+      .then(() => {
+        updateValue("");
+      })
+      .finally(() => {
+        setExecuting(false);
+      });
   };
 
   return (
@@ -31,7 +42,7 @@ const InputBar = ({ onExecute }) => {
         placeholder="INITIALIZE NEW BATTLE PROTOCOL..."
         type="text"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e) => updateValue(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleExecute()}
         disabled={executing}
       />
