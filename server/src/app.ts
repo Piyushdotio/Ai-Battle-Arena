@@ -15,10 +15,9 @@ const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
 
 app.use(
   cors({
-    origin: true, // This automatically sets Access-Control-Allow-Origin to the requesting origin
+    origin: "*", // Allows exactly everything, preventing credential conflicts
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   })
 );
 
